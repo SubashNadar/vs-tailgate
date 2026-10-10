@@ -377,7 +377,7 @@ function quoteForCmd(arg: string): string {
  */
 export function claudeArgs(model: string, streaming = false): string[] {
   if (!/^[A-Za-z0-9._\-[\]]+$/.test(model)) {
-    throw new Error(`"${model}" is not a valid model name. Check the catchup.model setting.`);
+    throw new Error(`"${model}" is not a valid model name. Check the tailgate.model setting.`);
   }
   return [
     '-p',
@@ -405,7 +405,7 @@ export function describeFailure(code: number | null, stdout: string, stderr: str
     }
   }
   if (code === 127 || /is not recognized as an internal or external command|command not found|No such file or directory/i.test(stderr)) {
-    return new Error('The Claude Code CLI was not found. Install it and sign in, or set its location in the catchup.claudePath setting.');
+    return new Error('The Claude Code CLI was not found. Install it and sign in, or set its location in the tailgate.claudePath setting.');
   }
   return new Error(`The Claude CLI exited with code ${code}. ${stderr.trim().slice(-400)}`.trim());
 }
@@ -414,7 +414,7 @@ export function spawnClaude(options: ClaudeOptions, streaming: boolean): ChildPr
   const args = claudeArgs(options.model, streaming);
   if (process.platform === 'win32') {
     if (/["&|<>^%]/.test(options.bin)) {
-      throw new Error('The catchup.claudePath setting contains characters that are not allowed.');
+      throw new Error('The tailgate.claudePath setting contains characters that are not allowed.');
     }
     // npm installs the CLI as a .cmd shim on Windows, which Node only runs through a shell.
     return spawn([options.bin, ...args].map(quoteForCmd).join(' '), { cwd: options.cwd, shell: true, windowsHide: true });

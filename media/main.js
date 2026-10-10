@@ -331,7 +331,7 @@
     app.replaceChildren();
 
     if (state.status === 'no-git') {
-      app.appendChild(el('p', 'muted', 'Catchup needs git, and could not run it. Install git, make sure it is on your PATH, then reload the window.'));
+      app.appendChild(el('p', 'muted', 'Tailgate needs git, and could not run it. Install git, make sure it is on your PATH, then reload the window.'));
       return;
     }
     if (state.status === 'no-repo') {

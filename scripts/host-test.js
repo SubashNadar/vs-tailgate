@@ -1,6 +1,6 @@
 // Runs test/host inside a real VS Code window, isolated from your own VS Code
 // profile, against a temporary repository and a stand-in for the Claude CLI.
-// Set CATCHUP_VSCODE to the VS Code executable if it is not found automatically.
+// Set TAILGATE_VSCODE to the VS Code executable if it is not found automatically.
 const { execFileSync, spawn } = require('node:child_process');
 const fs = require('node:fs');
 const os = require('node:os');
@@ -9,8 +9,8 @@ const path = require('node:path');
 const extensionRoot = path.resolve(__dirname, '..');
 
 function findVsCode() {
-  if (process.env.CATCHUP_VSCODE) {
-    return process.env.CATCHUP_VSCODE;
+  if (process.env.TAILGATE_VSCODE) {
+    return process.env.TAILGATE_VSCODE;
   }
   const candidates =
     process.platform === 'win32'
@@ -23,7 +23,7 @@ function findVsCode() {
         : ['/usr/share/code/code', '/usr/bin/code'];
   const found = candidates.find((candidate) => fs.existsSync(candidate));
   if (!found) {
-    throw new Error('VS Code was not found. Set CATCHUP_VSCODE to its executable.');
+    throw new Error('VS Code was not found. Set TAILGATE_VSCODE to its executable.');
   }
   return found;
 }
@@ -97,7 +97,7 @@ process.stdin.on('end', () => process.exit(0));
   return sh;
 }
 
-const work = fs.mkdtempSync(path.join(os.tmpdir(), 'catchup-host-'));
+const work = fs.mkdtempSync(path.join(os.tmpdir(), 'tailgate-host-'));
 const repo = path.join(work, 'repo');
 const userData = path.join(work, 'user-data');
 const resultFile = path.join(work, 'result.json');
@@ -109,9 +109,9 @@ fs.mkdirSync(path.join(userData, 'User'), { recursive: true });
 fs.writeFileSync(
   path.join(userData, 'User', 'settings.json'),
   JSON.stringify({
-    'catchup.claudePath': fakeCli,
-    'catchup.liveReview': true,
-    'catchup.liveReviewDelaySeconds': 2,
+    'tailgate.claudePath': fakeCli,
+    'tailgate.liveReview': true,
+    'tailgate.liveReviewDelaySeconds': 2,
     'security.workspace.trust.enabled': false,
     'telemetry.telemetryLevel': 'off',
     'update.mode': 'none',
@@ -119,7 +119,7 @@ fs.writeFileSync(
   }),
 );
 
-const env = { ...process.env, CATCHUP_HOST_RESULT: resultFile, CATCHUP_FAKE_PROMPT: promptFile };
+const env = { ...process.env, TAILGATE_HOST_RESULT: resultFile, TAILGATE_FAKE_PROMPT: promptFile };
 // Inherited from an Electron-based parent, these would stop VS Code starting as an app.
 delete env.ELECTRON_RUN_AS_NODE;
 delete env.ELECTRON_NO_ATTACH_CONSOLE;

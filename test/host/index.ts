@@ -1,12 +1,12 @@
 // Runs inside a real VS Code window (see scripts/host-test.js). The workspace is a
 // temporary repository with one edited file, one new file and one .env file.
-// catchup.claudePath points at a stand-in CLI that returns canned reviews, and
+// tailgate.claudePath points at a stand-in CLI that returns canned reviews, and
 // live review is switched on.
 import assert from 'node:assert/strict';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
-import type { CatchupApi } from '../../src/extension';
+import type { TailgateApi } from '../../src/extension';
 
 async function until<T>(what: string, read: () => T | undefined | false, timeoutMs = 30000): Promise<T> {
   const deadline = Date.now() + timeoutMs;
@@ -24,18 +24,18 @@ async function until<T>(what: string, read: () => T | undefined | false, timeout
 
 async function scenario(log: (step: string) => void): Promise<void> {
   const repo = vscode.workspace.workspaceFolders![0].uri.fsPath;
-  const promptFile = process.env.CATCHUP_FAKE_PROMPT!;
+  const promptFile = process.env.TAILGATE_FAKE_PROMPT!;
   const prompts = () => (fs.existsSync(promptFile) ? fs.readFileSync(promptFile, 'utf8') : '');
 
-  const extension = vscode.extensions.getExtension<CatchupApi>('catchup-dev.catchup');
+  const extension = vscode.extensions.getExtension<TailgateApi>('tailgate-dev.tailgate');
   assert.ok(extension, 'extension is installed');
   assert.equal(extension.isActive, false, 'extension stays inactive until it is used');
   log('not activated at startup');
 
-  await vscode.commands.executeCommand('catchup.panel.focus');
+  await vscode.commands.executeCommand('tailgate.panel.focus');
   const api = await extension.activate();
   const commands = await vscode.commands.getCommands(true);
-  for (const id of ['catchup.review', 'catchup.markReviewed', 'catchup.refresh']) {
+  for (const id of ['tailgate.review', 'tailgate.markReviewed', 'tailgate.refresh']) {
     assert.ok(commands.includes(id), `${id} is registered`);
   }
   log('activated by opening the panel; commands registered');
@@ -77,7 +77,7 @@ async function scenario(log: (step: string) => void): Promise<void> {
   assert.match(prompts(), /<answer>\nit returns 3 now\n<\/answer>/);
   log("an answer typed in the user's own words is marked");
 
-  await vscode.commands.executeCommand('catchup.review');
+  await vscode.commands.executeCommand('tailgate.review');
   const state = await until('the full review', () => (['ready', 'error'].includes(api.getState().status) ? api.getState() : undefined));
   assert.equal(state.status, 'ready', state.error);
   assert.equal(state.review!.summary, 'Canned review from the stand-in CLI.');
@@ -101,12 +101,12 @@ async function scenario(log: (step: string) => void): Promise<void> {
   await until('the new file to get a card', () => card('later.txt')?.state === 'ready');
   log('file watcher picked up a later change, flagged the full review as stale and reviewed the new file');
 
-  await vscode.commands.executeCommand('catchup.markReviewed');
+  await vscode.commands.executeCommand('tailgate.markReviewed');
   await until('the baseline to move', () => api.getState().status === 'idle' && api.getState().files.length === 1);
   assert.deepEqual(api.getState().files.map((f) => f.path), ['later.txt']);
   log('mark as reviewed keeps only the later change');
 
-  await vscode.commands.executeCommand('catchup.markReviewed');
+  await vscode.commands.executeCommand('tailgate.markReviewed');
   await until('everything to be reviewed', () => api.getState().files.length === 0);
   assert.deepEqual(Object.keys(api.getState().cards ?? {}), []);
   assert.deepEqual(Object.keys(api.getState().typed ?? {}), []);
@@ -121,7 +121,7 @@ async function scenario(log: (step: string) => void): Promise<void> {
   await until('the new file to be listed', () => api.getState().files.length === 1);
   await until('the live card to report the missing Copilot', () => card('for-copilot.txt')?.state === 'error');
   assert.match(card('for-copilot.txt')!.error!, /GitHub Copilot is not available/);
-  await vscode.commands.executeCommand('catchup.review');
+  await vscode.commands.executeCommand('tailgate.review');
   const failed = await until('the Copilot review to fail', () => (api.getState().status === 'error' ? api.getState() : undefined));
   assert.match(failed.error!, /GitHub Copilot is not available/);
   assert.equal(prompts().split('=====').length, requestsBefore, 'nothing is sent to the Claude CLI while Copilot is chosen');
@@ -129,14 +129,14 @@ async function scenario(log: (step: string) => void): Promise<void> {
 
   await api.send({ type: 'setProvider', provider: 'claude' });
   await until('the provider to switch back', () => api.getState().provider === 'claude');
-  await vscode.commands.executeCommand('catchup.review');
+  await vscode.commands.executeCommand('tailgate.review');
   await until('a Claude review after switching back', () => api.getState().status === 'ready');
   log('switching back to the Claude CLI works');
 }
 
 export async function run(): Promise<void> {
   const steps: string[] = [];
-  const resultFile = process.env.CATCHUP_HOST_RESULT;
+  const resultFile = process.env.TAILGATE_HOST_RESULT;
   let error: string | undefined;
   try {
     await scenario((step) => steps.push(step));

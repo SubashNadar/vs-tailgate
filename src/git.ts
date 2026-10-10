@@ -102,7 +102,7 @@ export async function treeExists(root: string, tree: string): Promise<boolean> {
  * staging area is never touched.
  */
 export async function snapshotTree(root: string): Promise<string> {
-  const tmpIndex = path.join(os.tmpdir(), `catchup-index-${process.pid}-${Date.now()}-${indexCounter++}`);
+  const tmpIndex = path.join(os.tmpdir(), `tailgate-index-${process.pid}-${Date.now()}-${indexCounter++}`);
   const env = { ...process.env, GIT_INDEX_FILE: tmpIndex };
   try {
     // Start from a copy of the real index so unchanged files are not rehashed.

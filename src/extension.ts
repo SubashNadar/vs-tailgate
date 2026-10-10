@@ -21,8 +21,8 @@ import {
 import { ClaudeSession, ReviewBackend } from './session';
 import { CopilotBackend, LmApi } from './copilot';
 
-const BASELINE_KEY = 'catchup.baseline';
-const CONSENT_KEY = 'catchup.consented';
+const BASELINE_KEY = 'tailgate.baseline';
+const CONSENT_KEY = 'tailgate.consented';
 
 type Provider = 'claude' | 'copilot';
 
@@ -40,11 +40,11 @@ const lmApi: LmApi = {
     return { token: source.token, cancel: () => source.cancel(), dispose: () => source.dispose() };
   },
 };
-const BASE_SCHEME = 'catchup-base';
+const BASE_SCHEME = 'tailgate-base';
 const REFRESH_DELAY_MS = 1500;
 
 /** Returned from activate() so host tests can observe the extension. */
-export interface CatchupApi {
+export interface TailgateApi {
   getState(): PanelState;
   /** Delivers a message as if the panel had sent it. */
   send(message: PanelMessage): Promise<void>;
@@ -110,19 +110,19 @@ class Controller implements vscode.Disposable {
       vscode.workspace.registerTextDocumentContentProvider(BASE_SCHEME, {
         provideTextDocumentContent: (uri) => (this.root ? git.showFile(this.root, uri.query, uri.path.slice(1)) : ''),
       }),
-      vscode.commands.registerCommand('catchup.review', () => this.review()),
-      vscode.commands.registerCommand('catchup.markReviewed', () => this.markReviewed()),
-      vscode.commands.registerCommand('catchup.refresh', () => this.refresh()),
+      vscode.commands.registerCommand('tailgate.review', () => this.review()),
+      vscode.commands.registerCommand('tailgate.markReviewed', () => this.markReviewed()),
+      vscode.commands.registerCommand('tailgate.refresh', () => this.refresh()),
       vscode.workspace.onDidChangeWorkspaceFolders(() => void this.init()),
       vscode.workspace.onDidChangeConfiguration((event) => {
-        if (event.affectsConfiguration('catchup.claudePath') || event.affectsConfiguration('catchup.model')) {
+        if (event.affectsConfiguration('tailgate.claudePath') || event.affectsConfiguration('tailgate.model')) {
           this.backend?.instance.restart();
         }
-        if (event.affectsConfiguration('catchup.provider')) {
+        if (event.affectsConfiguration('tailgate.provider')) {
           this.warmIfLive();
           this.setState(this.state);
         }
-        if (event.affectsConfiguration('catchup.autoReview') || event.affectsConfiguration('catchup.liveReview')) {
+        if (event.affectsConfiguration('tailgate.autoReview') || event.affectsConfiguration('tailgate.liveReview')) {
           this.warmIfLive();
           void this.refresh();
         }
@@ -145,7 +145,7 @@ class Controller implements vscode.Disposable {
   }
 
   private config(): vscode.WorkspaceConfiguration {
-    return vscode.workspace.getConfiguration('catchup');
+    return vscode.workspace.getConfiguration('tailgate');
   }
 
   private provider(): Provider {
@@ -468,7 +468,7 @@ class Controller implements vscode.Disposable {
       return false;
     }
     const answer = await vscode.window.showInformationMessage(
-      `Catchup writes reviews by sending the diff of your changed files to ${DESTINATION[this.provider()]}.`,
+      `Tailgate writes reviews by sending the diff of your changed files to ${DESTINATION[this.provider()]}.`,
       {
         modal: true,
         detail:
@@ -505,7 +505,7 @@ class Controller implements vscode.Disposable {
   private async review(automatic = false): Promise<void> {
     if (!this.root) {
       if (!automatic) {
-        void vscode.window.showInformationMessage('Catchup needs git and a folder that is a git repository.');
+        void vscode.window.showInformationMessage('Tailgate needs git and a folder that is a git repository.');
       }
       return;
     }
@@ -527,7 +527,7 @@ class Controller implements vscode.Disposable {
     }
     if (this.state.files.length === 0) {
       if (!automatic) {
-        void vscode.window.showInformationMessage('Catchup: nothing has changed since your last review.');
+        void vscode.window.showInformationMessage('Tailgate: nothing has changed since your last review.');
       }
       return;
     }
@@ -645,12 +645,12 @@ class Controller implements vscode.Disposable {
           return await this.openFile(message.file, message.line);
       }
     } catch (err) {
-      void vscode.window.showWarningMessage(`Catchup: ${(err as Error).message}`);
+      void vscode.window.showWarningMessage(`Tailgate: ${(err as Error).message}`);
     }
   }
 }
 
-export async function activate(context: vscode.ExtensionContext): Promise<CatchupApi> {
+export async function activate(context: vscode.ExtensionContext): Promise<TailgateApi> {
   const controller = new Controller(context);
   context.subscriptions.push(controller);
   await controller.start();

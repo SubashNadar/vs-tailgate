@@ -56,7 +56,7 @@ export type PanelMessage =
   | { type: 'openFile'; file: string; line?: number };
 
 export class PanelProvider implements vscode.WebviewViewProvider {
-  static readonly viewId = 'catchup.panel';
+  static readonly viewId = 'tailgate.panel';
 
   private view?: vscode.WebviewView;
   private state: PanelState = { status: 'idle', files: [] };

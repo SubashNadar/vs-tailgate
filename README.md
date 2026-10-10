@@ -1,8 +1,8 @@
-# Catchup
+# Tailgate
 
 Review what your AI coding agent just changed, while it keeps working.
 
-Catchup is a VS Code extension. Open its panel in a git repository and it lists the files changed since your last
+Tailgate is a VS Code extension. Open its panel in a git repository and it lists the files changed since your last
 review. It reviews them in two ways.
 
 **Live review**, for while the agent is running. Tick "Live review" in the panel and each changed file gets its own
@@ -32,16 +32,16 @@ changed after that.
 - VS Code 1.90 or newer, on a local folder in a trusted workspace
 - git
 - One of these, signed in. No API key is needed for either.
-  - The [Claude Code](https://claude.com/claude-code) CLI. Catchup runs it headless (`claude -p`). This is the default.
-  - GitHub Copilot, through the GitHub Copilot Chat extension. Catchup calls it through VS Code's language model API.
+  - The [Claude Code](https://claude.com/claude-code) CLI. Tailgate runs it headless (`claude -p`). This is the default.
+  - GitHub Copilot, through the GitHub Copilot Chat extension. Tailgate calls it through VS Code's language model API.
 
-Choose between them with the "Reviews written by" list in the panel, or the `catchup.provider` setting.
+Choose between them with the "Reviews written by" list in the panel, or the `tailgate.provider` setting.
 
 ## What leaves your machine
 
 A review sends the diff of your changed files to the service you chose: Claude through your own Claude Code CLI, or
-GitHub Copilot through VS Code. It counts against your usage with that service. Catchup asks for your agreement
-separately for each one, and VS Code adds its own prompt the first time an extension uses Copilot. Nothing is sent until you ask for a review or switch live review on, and the first time Catchup asks you
+GitHub Copilot through VS Code. It counts against your usage with that service. Tailgate asks for your agreement
+separately for each one, and VS Code adds its own prompt the first time an extension uses Copilot. Nothing is sent until you ask for a review or switch live review on, and the first time Tailgate asks you
 to confirm. With live review on, every changed file is sent as it settles, and again each time it changes, for as long
 as the panel is open; closing the panel pauses it.
 
@@ -50,7 +50,7 @@ Some files are listed as changed but their contents are never sent:
 - lock files and generated files (`package-lock.json`, `yarn.lock`, `pnpm-lock.yaml`, `*.min.js`, `*.map`, `*.snap`)
 - files that commonly hold secrets (`.env`, `.env.*`, `*.pem`, `*.key`, `*.p12`, `*.pfx`, `*.keystore`, `id_rsa*`,
   `id_ed25519*`, `.npmrc`, `.netrc`, `credentials.json`, `secrets.*`)
-- anything matching your own `catchup.exclude` patterns
+- anything matching your own `tailgate.exclude` patterns
 
 This is a pattern list, not a secret scanner: a credential pasted into an ordinary source file will be sent. Files
 ignored by git are never read at all.
@@ -65,44 +65,44 @@ npm install
 npm run compile
 ```
 
-Then open this folder in VS Code and press F5. A second VS Code window opens with Catchup loaded; open a git repository
-in it and click the Catchup icon in the activity bar.
+Then open this folder in VS Code and press F5. A second VS Code window opens with Tailgate loaded; open a git repository
+in it and click the Tailgate icon in the activity bar.
 
 ## How it works
 
-- **Tracking changes.** Catchup writes the working tree (tracked and untracked files, minus ignored ones) as a git tree
+- **Tracking changes.** Tailgate writes the working tree (tracked and untracked files, minus ignored ones) as a git tree
   object using a throwaway index, so your staging area is never touched. Changes are the diff between the tree you last
   marked as reviewed and the current one. Snapshots add objects to the repository's object store, so they only run
   while the panel is visible or automatic review is on. See `src/git.ts`.
 - **Writing the review.** The diff goes to the Claude CLI and the reply is parsed as JSON. A diff larger than
-  `catchup.maxDiffChars` is trimmed file by file. Each risk comes back with the line of code it is about, and Catchup
+  `tailgate.maxDiffChars` is trimmed file by file. Each risk comes back with the line of code it is about, and Tailgate
   finds that code in the diff to get the line number. See `src/reviewer.ts`.
-- **Keeping it quick.** Starting the Claude CLI takes around ten seconds, so Catchup keeps one CLI process alive and
+- **Keeping it quick.** Starting the Claude CLI takes around ten seconds, so Tailgate keeps one CLI process alive and
   sends it one request after another. The first review pays the startup; in our measurements later file reviews took
   about 7 seconds each with Sonnet. The process is replaced every 20 requests and stopped after three idle minutes.
   See `src/session.ts`.
 - **Live cards.** Each changed file's diff is hashed. A file whose hash is unchanged keeps its card; one whose hash
-  changed waits `catchup.liveReviewDelaySeconds` and is then reviewed by itself, oldest first, one at a time.
+  changed waits `tailgate.liveReviewDelaySeconds` and is then reviewed by itself, oldest first, one at a time.
 - **Showing it.** A webview view renders the review. See `src/panel.ts` and `media/main.js`.
 
 ## Settings
 
 | Setting | Default | What it does |
 | --- | --- | --- |
-| `catchup.provider` | `claude` | `claude` or `copilot`: which service writes the reviews. User setting only. |
-| `catchup.copilotModel` | empty | Copilot model family, such as `gpt-4o`. Empty uses the first model Copilot offers. |
-| `catchup.model` | `sonnet` | Model alias or full name passed to the Claude CLI. User setting only. |
-| `catchup.claudePath` | `claude` | Path to the Claude CLI. User setting only. |
-| `catchup.liveReview` | `false` | Review each file by itself as soon as it stops changing. User setting only. |
-| `catchup.liveReviewDelaySeconds` | `4` | How long a file must stay unchanged before its live review starts. |
-| `catchup.autoReview` | `false` | Write a review of everything automatically once files stop changing. User setting only. |
-| `catchup.autoReviewDelaySeconds` | `20` | How long files must stay unchanged before an automatic review. |
-| `catchup.exclude` | `[]` | Extra glob patterns for files whose contents must never be sent. |
-| `catchup.maxDiffChars` | `60000` | Largest diff sent for review. |
-| `catchup.timeoutSeconds` | `180` | How long to wait for a review. |
+| `tailgate.provider` | `claude` | `claude` or `copilot`: which service writes the reviews. User setting only. |
+| `tailgate.copilotModel` | empty | Copilot model family, such as `gpt-4o`. Empty uses the first model Copilot offers. |
+| `tailgate.model` | `sonnet` | Model alias or full name passed to the Claude CLI. User setting only. |
+| `tailgate.claudePath` | `claude` | Path to the Claude CLI. User setting only. |
+| `tailgate.liveReview` | `false` | Review each file by itself as soon as it stops changing. User setting only. |
+| `tailgate.liveReviewDelaySeconds` | `4` | How long a file must stay unchanged before its live review starts. |
+| `tailgate.autoReview` | `false` | Write a review of everything automatically once files stop changing. User setting only. |
+| `tailgate.autoReviewDelaySeconds` | `20` | How long files must stay unchanged before an automatic review. |
+| `tailgate.exclude` | `[]` | Extra glob patterns for files whose contents must never be sent. |
+| `tailgate.maxDiffChars` | `60000` | Largest diff sent for review. |
+| `tailgate.timeoutSeconds` | `180` | How long to wait for a review. |
 
 The settings marked "user setting only" cannot be set by a workspace, so a repository you open cannot choose which
-program Catchup runs or make it spend your usage.
+program Tailgate runs or make it spend your usage.
 
 ## Known limits
 
@@ -111,10 +111,10 @@ program Catchup runs or make it spend your usage.
 - A live card can describe a version of a file that the agent goes on to rewrite; it is replaced when that happens.
 - Copilot support is covered by tests against a stand-in for VS Code's model API, and by a test that it fails cleanly
   when Copilot is missing. Review quality with Copilot's models has not been measured; `npm run eval` covers Claude only.
-- In a multi-folder workspace, Catchup uses the first folder that is a git repository.
+- In a multi-folder workspace, Tailgate uses the first folder that is a git repository.
 - Renamed files show as one deleted file and one added file.
 - The starting point is kept as an unreferenced git object. If git prunes it (by default after about two weeks without
-  a review), Catchup falls back to your last commit.
+  a review), Tailgate falls back to your last commit.
 
 ## Tests
 

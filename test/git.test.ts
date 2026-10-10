@@ -17,7 +17,7 @@ const write = (file: string, content: string) => {
 };
 
 before(() => {
-  repo = fs.mkdtempSync(path.join(os.tmpdir(), 'catchup-test-'));
+  repo = fs.mkdtempSync(path.join(os.tmpdir(), 'tailgate-test-'));
   run('init', '-q');
   run('config', 'user.email', 'test@example.com');
   run('config', 'user.name', 'Test');
@@ -115,7 +115,7 @@ test('snapshot sees edits, new, deleted and ignored files without touching the i
 });
 
 test('a repository with no commits diffs against the empty tree', async () => {
-  const empty = fs.mkdtempSync(path.join(os.tmpdir(), 'catchup-empty-'));
+  const empty = fs.mkdtempSync(path.join(os.tmpdir(), 'tailgate-empty-'));
   try {
     execFileSync('git', ['init', '-q'], { cwd: empty });
     fs.writeFileSync(path.join(empty, 'first.txt'), 'hi\n');

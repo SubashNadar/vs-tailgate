@@ -61,7 +61,7 @@ function writeFiles(repo, files, version) {
 }
 
 async function runCase(testCase) {
-  const repo = fs.mkdtempSync(path.join(os.tmpdir(), 'catchup-eval-'));
+  const repo = fs.mkdtempSync(path.join(os.tmpdir(), 'tailgate-eval-'));
   const run = (...args) => execFileSync('git', args, { cwd: repo, stdio: 'ignore' });
   try {
     run('init', '-q');

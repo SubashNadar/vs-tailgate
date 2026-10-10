@@ -44,7 +44,7 @@ function session(overrides: { bin?: string; timeoutMs?: number; maxRequests?: nu
 }
 
 before(() => {
-  dir = fs.mkdtempSync(path.join(os.tmpdir(), 'catchup-session-'));
+  dir = fs.mkdtempSync(path.join(os.tmpdir(), 'tailgate-session-'));
   fs.writeFileSync(path.join(dir, 'fake.js'), FAKE);
   if (process.platform === 'win32') {
     bin = path.join(dir, 'fake.cmd');
