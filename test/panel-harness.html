@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<!-- Opens the panel UI in a plain browser with sample data, standing in for the VS Code webview. -->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Catchup panel harness</title>
+  <style>
+    :root {
+      --vscode-foreground: #cccccc;
+      --vscode-descriptionForeground: #9d9d9d;
+      --vscode-font-family: "Segoe UI", system-ui, sans-serif;
+      --vscode-font-size: 13px;
+      --vscode-editor-font-family: Consolas, monospace;
+      --vscode-textLink-foreground: #4daafc;
+      --vscode-button-foreground: #ffffff;
+      --vscode-button-background: #0078d4;
+      --vscode-button-hoverBackground: #026ec1;
+      --vscode-button-secondaryForeground: #cccccc;
+      --vscode-button-secondaryBackground: #313131;
+      --vscode-button-secondaryHoverBackground: #3c3c3c;
+      --vscode-gitDecoration-addedResourceForeground: #81b88b;
+      --vscode-gitDecoration-modifiedResourceForeground: #e2c08d;
+      --vscode-gitDecoration-deletedResourceForeground: #c74e39;
+      --vscode-textBlockQuote-background: #2b2b2b;
+      --vscode-editorError-foreground: #f14c4c;
+      --vscode-editorWarning-foreground: #cca700;
+      --vscode-editorInfo-foreground: #3794ff;
+      --vscode-list-hoverBackground: #2a2d2e;
+    }
+    html { background: #181818; }
+    body { max-width: 340px; }
+  </style>
+  <link rel="stylesheet" href="../media/main.css">
+</head>
+<body>
+  <div id="app"></div>
+  <script>
+    window.posted = [];
+    window.acquireVsCodeApi = () => ({ postMessage: (m) => window.posted.push(m) });
+    window.sample = {
+      status: 'ready',
+      reviewTree: 'abc123',
+      live: true,
+      provider: 'copilot',
+      typed: {
+        'all:abc123:1': { state: 'ready', text: 'user input goes straight into the query', result: { verdict: 'correct', feedback: 'You spotted that the id is not bound as a parameter.' } },
+      },
+      cards: {
+        'src/users.js': {
+          key: 'k1',
+          state: 'ready',
+          review: {
+            what: 'getUser now checks an in-memory cache before querying the database.',
+            risks: [
+              { severity: 'high', file: 'src/users.js', line: 7, title: 'SQL injection in getUser', detail: 'The id is concatenated into the SQL string.' },
+              { severity: 'low', file: 'src/users.js', title: 'Cache never evicts', detail: 'Memory grows with every distinct id.' },
+            ],
+            question: { question: 'What does getUser(5) return after deleteUser(5)?', options: ['An empty result', 'The stale cached user', 'It throws', 'null'], answer: 1, explanation: 'deleteUser never clears the cache.' },
+          },
+        },
+        'src/cache/index.js': { key: 'k2', state: 'loading' },
+        'legacy/old-users.js': { key: 'k3', state: 'ready', review: { what: 'Removes the unused legacy module.', risks: [] } },
+        'assets/logo.png': { key: 'skipped', state: 'skipped' },
+      },
+      stale: true,
+      trimmedFiles: 1,
+      excludedFiles: 2,
+      files: [
+        { path: 'src/users.js', status: 'modified', added: 12, deleted: 2 },
+        { path: 'src/cache/index.js', status: 'added', added: 30, deleted: 0 },
+        { path: 'legacy/old-users.js', status: 'deleted', added: 0, deleted: 44 },
+        { path: 'assets/logo.png', status: 'added', added: null, deleted: null },
+      ],
+      review: {
+        summary: 'users.js now caches getUser results in memory and adds a deleteUser function. The getUser query was changed from a parameterised query to string concatenation.',
+        changes: [
+          { file: 'src/users.js', what: 'getUser checks a module-level cache before querying the database, and logs each loaded user.' },
+          { file: 'src/cache/index.js', what: 'New helper that wraps a plain object as a cache.' },
+        ],
+        risks: [
+          { severity: 'high', file: 'src/users.js', line: 7, title: 'SQL injection in getUser', detail: 'The id is concatenated into the SQL string instead of being bound as a parameter.' },
+          { severity: 'medium', file: 'src/users.js', line: 9, title: 'Sensitive user data logged', detail: 'console.log prints the full user record.' },
+          { severity: 'low', file: 'src/cache/index.js', title: 'Cache never evicts', detail: 'Memory grows with every distinct id.' },
+        ],
+        questions: [
+          { question: 'What does getUser(5) return after deleteUser(5) in the same process?', options: ['An empty result', 'It throws', 'The stale cached user', 'null'], answer: 2, explanation: 'deleteUser never removes the cache entry.' },
+          { question: 'Why is the new query a security concern?', options: ['It is slow', 'The id is concatenated into the SQL', 'It lacks await', 'Wrong table'], answer: 1, explanation: 'Untrusted input can alter the query.' },
+        ],
+      },
+    };
+    window.show = (state) => window.postMessage({ type: 'state', state }, '*');
+  </script>
+  <script src="../media/main.js"></script>
+  <script>window.show(window.sample);</script>
+</body>
+</html>

@@ -1,0 +1,157 @@
+{
+  "name": "catchup",
+  "displayName": "Catchup",
+  "description": "Review what your AI coding agent just changed, while it keeps working.",
+  "version": "0.0.1",
+  "publisher": "catchup-dev",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./out/src/extension.js",
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false,
+      "description": "Catchup runs git and the Claude Code CLI against the open folder, so it only works in trusted workspaces."
+    },
+    "virtualWorkspaces": {
+      "supported": false,
+      "description": "Catchup needs a git repository on disk."
+    }
+  },
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "catchup",
+          "title": "Catchup",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "catchup": [
+        {
+          "type": "webview",
+          "id": "catchup.panel",
+          "name": "Review"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "catchup.review",
+        "title": "Catchup: Review Changes"
+      },
+      {
+        "command": "catchup.markReviewed",
+        "title": "Catchup: Mark Changes as Reviewed"
+      },
+      {
+        "command": "catchup.refresh",
+        "title": "Catchup: Refresh Changed Files"
+      }
+    ],
+    "configuration": {
+      "title": "Catchup",
+      "properties": {
+        "catchup.provider": {
+          "type": "string",
+          "enum": ["claude", "copilot"],
+          "enumDescriptions": [
+            "The Claude Code CLI, using your Claude sign-in.",
+            "GitHub Copilot, using the Copilot Chat extension and your Copilot sign-in."
+          ],
+          "default": "claude",
+          "scope": "machine",
+          "description": "Which service writes the reviews. Your code is sent to the one you choose. Cannot be set per workspace."
+        },
+        "catchup.copilotModel": {
+          "type": "string",
+          "default": "",
+          "scope": "machine",
+          "description": "Copilot model family to use, for example gpt-4o. Leave empty to use the first model Copilot offers."
+        },
+        "catchup.claudePath": {
+          "type": "string",
+          "default": "claude",
+          "scope": "machine",
+          "description": "Path to the Claude Code CLI used to write reviews. Cannot be set per workspace."
+        },
+        "catchup.model": {
+          "type": "string",
+          "default": "sonnet",
+          "scope": "machine",
+          "description": "Model alias or full model name passed to the Claude CLI. Cannot be set per workspace."
+        },
+        "catchup.autoReview": {
+          "type": "boolean",
+          "default": false,
+          "scope": "machine",
+          "description": "Write a review automatically once the files have stopped changing. Each review uses your Claude usage. Cannot be set per workspace."
+        },
+        "catchup.autoReviewDelaySeconds": {
+          "type": "number",
+          "default": 20,
+          "minimum": 5,
+          "scope": "machine",
+          "description": "How long the files must stay unchanged before an automatic review starts."
+        },
+        "catchup.liveReview": {
+          "type": "boolean",
+          "default": false,
+          "scope": "machine",
+          "description": "Review each changed file by itself as soon as it stops changing, while the Catchup panel is open. Each file review uses your Claude usage. Cannot be set per workspace."
+        },
+        "catchup.liveReviewDelaySeconds": {
+          "type": "number",
+          "default": 4,
+          "minimum": 2,
+          "scope": "machine",
+          "description": "How long a file must stay unchanged before its live review starts."
+        },
+        "catchup.exclude": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Extra glob patterns for files whose contents must never be sent for review, for example \"**/config/private/**\". Lock files, generated files and common secret files are always left out."
+        },
+        "catchup.maxDiffChars": {
+          "type": "number",
+          "default": 60000,
+          "minimum": 2000,
+          "description": "Largest diff, in characters, sent for review. Files that do not fit are left out and listed as skipped."
+        },
+        "catchup.timeoutSeconds": {
+          "type": "number",
+          "default": 180,
+          "minimum": 10,
+          "description": "How long to wait for a review before giving up."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p .",
+    "watch": "tsc -w -p .",
+    "lint": "eslint src test scripts eval",
+    "test": "npm run compile && node --test \"out/test/*.test.js\"",
+    "test:host": "npm run compile && node scripts/host-test.js",
+    "eval": "npm run compile && node eval/run.js",
+    "package": "npm run compile && npx --yes @vscode/vsce package --allow-missing-repository"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^20.14.0",
+    "@types/vscode": "~1.90.0",
+    "eslint": "^10.12.0",
+    "typescript": "^5.5.0",
+    "typescript-eslint": "^8.4.0"
+  }
+}
