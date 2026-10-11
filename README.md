@@ -24,6 +24,10 @@ Every question can be answered two ways: pick one of the options, or type an ans
 **Check**. A typed answer is sent to Claude with the question and marked as correct, partly right or not quite, with a
 sentence on what you got and what you missed.
 
+**Copy risks for agent** puts the risks on the clipboard as a message you can paste into your coding agent's chat. It
+asks the agent to check each risk and fix the real ones, not to fix them blindly. It copies the full review's risks
+when there is one, and the live cards' risks before that.
+
 When you have read a review, **Mark as reviewed** moves the starting point forward, so the next review covers only what
 changed after that.
 

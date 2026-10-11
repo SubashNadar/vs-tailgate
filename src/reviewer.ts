@@ -31,6 +31,25 @@ export interface FileReview {
   question?: Question;
 }
 
+/**
+ * The risks as a message to paste into the coding agent's chat. It asks the agent
+ * to check each risk rather than fix it blindly, because a review can be wrong.
+ */
+export function buildAgentPrompt(risks: Risk[]): string {
+  const items = risks.map((risk, index) => {
+    const where = risk.line ? `${risk.file}:${risk.line}` : risk.file;
+    const head = `${index + 1}. [${risk.severity}] ${where}: ${risk.title}`;
+    return risk.detail ? `${head}\n   ${risk.detail}` : head;
+  });
+  return [
+    `A review of your recent changes flagged ${risks.length === 1 ? 'this risk' : 'these risks'}.`,
+    'Check each one against the code. Fix the ones that are real, and tell me which ones you think are wrong and why.',
+    '',
+    ...items,
+    '',
+  ].join('\n');
+}
+
 export interface DiffCut {
   text: string;
   /** Whole files left out because they did not fit. */

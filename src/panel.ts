@@ -49,6 +49,7 @@ export type PanelMessage =
   | { type: 'review' }
   | { type: 'cancel' }
   | { type: 'markReviewed' }
+  | { type: 'copyRisks' }
   | { type: 'setLive'; on: boolean }
   | { type: 'setProvider'; provider: 'claude' | 'copilot' }
   | { type: 'answer'; key: string; text: string }

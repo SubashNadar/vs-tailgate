@@ -11,6 +11,7 @@ First version.
 - Questions can be answered by picking an option or by typing an answer in your own words, which Claude marks.
 - Reviews can be written by GitHub Copilot instead of the Claude CLI; choose in the panel or with `tailgate.provider`.
 - One Claude CLI process is kept alive between requests, so reviews after the first skip the CLI's startup time.
+- Copy risks for agent puts the risks on the clipboard as a message to paste into your coding agent's chat.
 - Mark as reviewed moves the starting point forward; clicking a changed file shows a before/after diff.
 - Risk line numbers are worked out from the diff rather than taken from the model.
 - Lock files, generated files and files that commonly hold secrets are never sent for review; `tailgate.exclude` adds more.

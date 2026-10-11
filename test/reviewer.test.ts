@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
+  buildAgentPrompt,
   buildAnswerPrompt,
   MAX_ANSWER_CHARS,
   parseAnswerFeedback,
@@ -18,6 +19,18 @@ import {
 } from '../src/reviewer';
 
 const fileDiff = (name: string, body: string) => `diff --git a/${name} b/${name}\n--- a/${name}\n+++ b/${name}\n${body}\n`;
+
+test('buildAgentPrompt lists each risk with its place, and asks for a check rather than a blind fix', () => {
+  const prompt = buildAgentPrompt([
+    { severity: 'high', file: 'src/users.js', line: 7, title: 'SQL injection in getUser', detail: 'The id is concatenated.' },
+    { severity: 'low', file: 'src/cache.js', title: 'Cache never evicts', detail: '' },
+  ]);
+  assert.match(prompt, /^A review of your recent changes flagged these risks\.\n/);
+  assert.match(prompt, /tell me which ones you think are wrong/);
+  assert.match(prompt, /^1\. \[high\] src\/users\.js:7: SQL injection in getUser\n {3}The id is concatenated\.$/m);
+  assert.match(prompt, /^2\. \[low\] src\/cache\.js: Cache never evicts$/m);
+  assert.match(buildAgentPrompt([{ severity: 'medium', file: 'a.ts', title: 't', detail: 'd' }]), /flagged this risk\./);
+});
 
 test('truncateDiff leaves a small diff alone', () => {
   const diff = fileDiff('a.ts', '+one');

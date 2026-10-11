@@ -6,6 +6,7 @@ import { coalesce } from './coalesce';
 import * as git from './git';
 import { FileCard, PanelMessage, PanelProvider, PanelState, TypedAnswer } from './panel';
 import {
+  buildAgentPrompt,
   buildAnswerPrompt,
   buildFilePrompt,
   buildPrompt,
@@ -15,6 +16,7 @@ import {
   parseFileReview,
   parseReview,
   Question,
+  Risk,
   splitDiff,
   truncateDiff,
 } from './reviewer';
@@ -110,9 +112,14 @@ class Controller implements vscode.Disposable {
       vscode.workspace.registerTextDocumentContentProvider(BASE_SCHEME, {
         provideTextDocumentContent: (uri) => (this.root ? git.showFile(this.root, uri.query, uri.path.slice(1)) : ''),
       }),
-      vscode.commands.registerCommand('tailgate.review', () => this.review()),
+      vscode.commands.registerCommand('tailgate.review', async () => {
+        // Run from the Command Palette the panel may be hidden, so show it before the review fills it.
+        await vscode.commands.executeCommand('tailgate.panel.focus');
+        return this.review();
+      }),
       vscode.commands.registerCommand('tailgate.markReviewed', () => this.markReviewed()),
       vscode.commands.registerCommand('tailgate.refresh', () => this.refresh()),
+      vscode.commands.registerCommand('tailgate.copyRisks', () => this.copyRisks()),
       vscode.workspace.onDidChangeWorkspaceFolders(() => void this.init()),
       vscode.workspace.onDidChangeConfiguration((event) => {
         if (event.affectsConfiguration('tailgate.claudePath') || event.affectsConfiguration('tailgate.model')) {
@@ -592,6 +599,29 @@ class Controller implements vscode.Disposable {
     await this.refresh();
   }
 
+  /**
+   * Risks to hand to the agent. The full review read every file together, so it
+   * wins when there is one; before that, the live cards are all there is.
+   */
+  private risksOnScreen(): Risk[] {
+    if (this.state.status === 'ready' && this.state.review) {
+      return this.state.review.risks;
+    }
+    return this.state.files.flatMap((file) => this.cards.get(file.path)?.card.review?.risks ?? []);
+  }
+
+  private async copyRisks(): Promise<void> {
+    const risks = this.risksOnScreen();
+    if (risks.length === 0) {
+      void vscode.window.showInformationMessage('Tailgate has no risks to copy yet.');
+      return;
+    }
+    await vscode.env.clipboard.writeText(buildAgentPrompt(risks));
+    void vscode.window.showInformationMessage(
+      `Tailgate copied ${risks.length === 1 ? '1 risk' : `${risks.length} risks`}. Paste into your agent's chat.`,
+    );
+  }
+
   private resolveInRoot(file: string): string | undefined {
     if (!this.root || typeof file !== 'string') {
       return undefined;
@@ -633,6 +663,8 @@ class Controller implements vscode.Disposable {
           return this.cancel();
         case 'markReviewed':
           return await this.markReviewed();
+        case 'copyRisks':
+          return await this.copyRisks();
         case 'setLive':
           return await this.setLive(message.on === true);
         case 'setProvider':

@@ -35,7 +35,7 @@ async function scenario(log: (step: string) => void): Promise<void> {
   await vscode.commands.executeCommand('tailgate.panel.focus');
   const api = await extension.activate();
   const commands = await vscode.commands.getCommands(true);
-  for (const id of ['tailgate.review', 'tailgate.markReviewed', 'tailgate.refresh']) {
+  for (const id of ['tailgate.review', 'tailgate.markReviewed', 'tailgate.refresh', 'tailgate.copyRisks']) {
     assert.ok(commands.includes(id), `${id} is registered`);
   }
   log('activated by opening the panel; commands registered');
@@ -90,6 +90,18 @@ async function scenario(log: (step: string) => void): Promise<void> {
   await api.send({ type: 'answer', key: reviewQuestion, text: 'no idea' });
   assert.equal(api.getState().typed?.[reviewQuestion]?.result?.verdict, 'incorrect');
   log('typed answers work on the full review too');
+
+  // The test window shares the real clipboard, so put back whatever was on it.
+  const clipboardBefore = await vscode.env.clipboard.readText();
+  try {
+    await vscode.commands.executeCommand('tailgate.copyRisks');
+    const copied = await vscode.env.clipboard.readText();
+    assert.match(copied, /^A review of your recent changes flagged this risk\./);
+    assert.match(copied, /^1\. \[high\] app\.js: Off by one\n {3}The sum is now wrong\.$/m);
+  } finally {
+    await vscode.env.clipboard.writeText(clipboardBefore);
+  }
+  log('the risks are copied as a message for the agent');
 
   assert.match(prompts(), /^\+ {2}const total = a \+ b \+ 2;$/m, 'the diff reaches the CLI');
   assert.doesNotMatch(prompts(), /not-a-real-secret/, 'secret file contents never reach the CLI');

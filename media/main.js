@@ -156,6 +156,18 @@
     return block;
   }
 
+  /** Risks the copy button would hand over: the full review's when there is one, otherwise the live cards'. */
+  function riskCount() {
+    if (state.status === 'ready' && state.review) {
+      return state.review.risks.length;
+    }
+    const cards = state.cards || {};
+    return state.files.reduce((sum, file) => {
+      const card = cards[file.path];
+      return sum + (card && card.review ? card.review.risks.length : 0);
+    }, 0);
+  }
+
   function renderHeader() {
     const header = el('div', 'header');
     const count = state.files.length;
@@ -167,7 +179,13 @@
     review.disabled = busy || count === 0;
     const done = button('Mark as reviewed', 'secondary', () => vscode.postMessage({ type: 'markReviewed' }));
     done.disabled = count === 0;
-    actions.append(review, done);
+    const risks = riskCount();
+    const copy = button(risks > 0 ? `Copy ${plural(risks, 'risk', 'risks')} for agent` : 'Copy risks for agent', 'secondary', () =>
+      vscode.postMessage({ type: 'copyRisks' }),
+    );
+    copy.title = "Copies the risks as a message you can paste into your coding agent's chat";
+    copy.disabled = risks === 0;
+    actions.append(review, done, copy);
     header.appendChild(actions);
 
     const live = el('label', 'live');

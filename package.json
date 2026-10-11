@@ -54,6 +54,10 @@
       {
         "command": "tailgate.refresh",
         "title": "Tailgate: Refresh Changed Files"
+      },
+      {
+        "command": "tailgate.copyRisks",
+        "title": "Tailgate: Copy Risks for Agent"
       }
     ],
     "configuration": {
