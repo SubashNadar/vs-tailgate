@@ -5,6 +5,13 @@
   "version": "0.0.1",
   "publisher": "tailgate-dev",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SubashNadar/vs-tailgate.git"
+  },
+  "bugs": {
+    "url": "https://github.com/SubashNadar/vs-tailgate/issues"
+  },
   "icon": "media/logo.png",
   "engines": {
     "vscode": "^1.90.0"
@@ -149,7 +156,7 @@
     "test": "npm run compile && node --test \"out/test/*.test.js\"",
     "test:host": "npm run compile && node scripts/host-test.js",
     "eval": "npm run compile && node eval/run.js",
-    "package": "npm run compile && npx --yes @vscode/vsce package --allow-missing-repository"
+    "package": "npm run compile && npx --yes @vscode/vsce package"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

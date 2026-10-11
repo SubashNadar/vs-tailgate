@@ -62,6 +62,21 @@ ignored by git are never read at all.
 The Claude CLI runs with every tool switched off, and Copilot is given no tools, so text inside a diff cannot make
 either of them read or change anything.
 
+## Install
+
+Tailgate is not on the Marketplace yet. Download `tailgate-<version>.vsix` from the
+[latest release](https://github.com/SubashNadar/vs-tailgate/releases/latest), then in VS Code open the Extensions view,
+choose **Install from VSIX...** from its `...` menu, and pick the file. Or from a terminal:
+
+```bash
+code --install-extension tailgate-0.0.1.vsix
+```
+
+Reload the window, open a git repository, and click the Tailgate icon in the activity bar. If the icon is missing, run
+**Tailgate: Review Changes** from the Command Palette; see Known limits.
+
+Found a bug or have an idea? [Open an issue](https://github.com/SubashNadar/vs-tailgate/issues).
+
 ## Run it from source
 
 ```bash
@@ -115,6 +130,9 @@ program Tailgate runs or make it spend your usage.
 - A live card can describe a version of a file that the agent goes on to rewrite; it is replaced when that happens.
 - Copilot support is covered by tests against a stand-in for VS Code's model API, and by a test that it fails cleanly
   when Copilot is missing. Review quality with Copilot's models has not been measured; `npm run eval` covers Claude only.
+- On a VS Code that is too old for another installed extension, the Tailgate icon can be missing from the activity bar.
+  Seen with VS Code 1.105 and a newer Claude Code extension: VS Code stops registering sidebar icons after that
+  extension's error and puts Tailgate's panel in the Explorer, as a section called "Review". Updating VS Code fixes it.
 - In a multi-folder workspace, Tailgate uses the first folder that is a git repository.
 - Renamed files show as one deleted file and one added file.
 - The starting point is kept as an unreferenced git object. If git prunes it (by default after about two weeks without
