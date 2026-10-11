@@ -1,0 +1,30 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run package
+      - name: Create the release with the .vsix attached
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          gh release create "$TAG" tailgate-*.vsix \
+            --title "Tailgate $TAG" \
+            --notes "Download the .vsix below. In VS Code, open the Extensions view, choose **Install from VSIX...** from its \`...\` menu and pick the file. See the [README](https://github.com/${{ github.repository }}#install) for requirements, and [open an issue](https://github.com/${{ github.repository }}/issues) with feedback."
