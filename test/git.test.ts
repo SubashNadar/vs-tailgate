@@ -55,7 +55,9 @@ test('diffedPaths lists the files that have a section in a diff', () => {
 });
 
 test('repoRoot finds the repository and returns undefined outside one', async () => {
-  assert.equal(fs.realpathSync((await git.repoRoot(repo)) as string), fs.realpathSync(repo));
+  // The temp folder can be spelled with a Windows short name (RUNNER~1), which only the native call expands.
+  const real = fs.realpathSync.native;
+  assert.equal(real((await git.repoRoot(repo)) as string), real(repo));
   assert.equal(await git.repoRoot(os.tmpdir()), undefined);
 });
 
