@@ -5,6 +5,7 @@
   "version": "0.0.1",
   "publisher": "tailgate-dev",
   "license": "MIT",
+  "icon": "media/logo.png",
   "engines": {
     "vscode": "^1.90.0"
   },
